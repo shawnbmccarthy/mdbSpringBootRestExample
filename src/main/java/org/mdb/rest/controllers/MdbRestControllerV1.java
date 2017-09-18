@@ -5,7 +5,13 @@ import com.mongodb.DBObject;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoOperations;
-import org.springframework.data.mongodb.core.aggregation.*;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationExpression;
+import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
+import org.springframework.data.mongodb.core.aggregation.AggregationOperationContext;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
+import org.springframework.data.mongodb.core.aggregation.UnwindOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +20,19 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 /*
- *
+ * MdbRestControllerV1:
+ * - Represents Version 1 of our standard API /api/v1/{period}
+ *   Period comes in the form of: minutes, hourly, daily, monthly, yearly
+ *   * Supports only HTTP GET request methods
+ *   * Returns only JSON Responses
+ *   * GET Request Params:
+ *     1. userId: name of user
+ *     2. fromDateTime: start of date range (inclusive)
+ *     3. toDateTime: end of date range (inclusive)
+ *     4. dimensions: CSV format (still need to work this out)
+ *     5. offset: offset of request default 0 (NOT USED IN THIS VERSION)
+ *     6. limit: max number of documents per response, default 1000 (NOT USED IN THIS VERSION)
+ *     
  */
 @RestController
 public class MdbRestControllerV1 {
