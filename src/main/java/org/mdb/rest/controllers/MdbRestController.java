@@ -39,7 +39,7 @@ public class MdbRestController {
             @ApiParam(value="From Date yyyy-MM-dd'T'HH:mm:ss.SSSZ", required=true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime fromDateTime,
             @ApiParam(value="To Date yyyy-MM-dd'T'HH:mm:ss.SSSZ", required=true)
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime toDateTime,
+                @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime toDateTime,
             @ApiParam(
                     value="CSV of Dimensions",
                     required=true,

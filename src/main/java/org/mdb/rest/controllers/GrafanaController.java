@@ -17,7 +17,8 @@ import java.util.*;
 /*
  * TODO: Create Grafana Setup
  *
- * Basic RestController /nnas
+ * Basic Grafana Rest Controller -
+ * Need to add steps to conform to grafana requirements
  */
 @RestController
 public class GrafanaController {
