@@ -14,7 +14,9 @@ public class MainTester {
 
     private static String[] users = {
             "e.Bukowski", "o.Sweetwood", "c.Mohr", "i.Wheeler", "e.Henjik",
-            "d.West", "w.Larsen", "e.Bowers", "e.Munroe", "o.Carter"
+            "d.West", "w.Larsen", "e.Bowers", "e.Munroe", "o.Carter", "z.Jones",
+            "u.Miller", "u.Golden", "o.Letanik", "o.Bismark", "o.Carter", "o.Fargo",
+            "o.Gilmer"
     };
 
     public static void main(String [] args) throws Exception {
@@ -27,8 +29,7 @@ public class MainTester {
             if(i >= users.length){
                 i = 0;
             }
-            u = u + userId + users[i];
-            Runnable worker = new Worker((HttpURLConnection) new URL(u).openConnection());
+            Runnable worker = new Worker(u + userId + users[i]);
             e.execute(worker);
         }
     }
