@@ -28,7 +28,7 @@ public class MainTester {
             if(i >= users.length){
                 i = 0;
             }
-            Runnable worker = new Worker((HttpURLConnection) new URL(u + userId + users[i]).openConnection());
+            Runnable worker = new Worker(u + userId + users[i]);
             e.execute(worker);
         }
     }
