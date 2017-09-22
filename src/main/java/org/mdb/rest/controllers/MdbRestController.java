@@ -57,6 +57,8 @@ public class MdbRestController {
                     )
             );
 
+            LimitOperation l = Aggregation.limit(10);
+
             /*
              * TODO: Need to figure out if it is monthly or something else
              * Description given originally was application defines it
@@ -101,7 +103,7 @@ public class MdbRestController {
                     .and("$val.dim.acct_type").as("dimension.acct_type")
                     .and("$val.dim.state").as("dimension.state");
 
-            Aggregation agg = Aggregation.newAggregation(userDateMatch, filterDimensions, unwindVal, projectDims);
+            Aggregation agg = Aggregation.newAggregation(userDateMatch, l, filterDimensions, unwindVal, projectDims);
 
             /*
              * TODO: only monthly here

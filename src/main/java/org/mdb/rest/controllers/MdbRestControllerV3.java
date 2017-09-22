@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,58 +38,14 @@ public class MdbRestControllerV3 {
             @ApiParam(value="page size", defaultValue="1000") @RequestParam(value="limit", required=false, defaultValue="1000") int limit
     ) {
         try {
-            AggregationOperation userDateMatch = Aggregation.match(
-                    Criteria.where("userId").is(userId).andOperator(
-                            Criteria.where("date").gte(new Date(fromDateTime.toInstant().toEpochMilli())),
-                            Criteria.where("date").lte(new Date(toDateTime.toInstant().toEpochMilli()))
-                    )
+            Query q = new Query();
+            q.addCriteria(Criteria.where("userId").is(userId).andOperator(
+                    Criteria.where("date").gte(new Date(fromDateTime.toInstant().toEpochMilli())),
+                    Criteria.where("date").lte(new Date(toDateTime.toInstant().toEpochMilli())))
             );
 
-            ProjectionOperation filterDimensions = Aggregation.project().and(new AggregationExpression() {
-                @Override
-                public DBObject toDbObject(AggregationOperationContext aggregationOperationContext) {
-                    // https://docs.mongodb.com/manual/reference/operator/aggregation/filter/index.html
-                    DBObject filterExp = new BasicDBObject("input", "$val").append("as", "val");
-                    List<DBObject> condExp = new ArrayList<>();
-
-                    List<String> repCond = new ArrayList<>();
-                    List<String> dobCond = new ArrayList<>();
-                    List<String> acctTypeCond = new ArrayList<>();
-                    List<String> stateCond = new ArrayList<>();
-
-                    repCond.add("$$val.dim.rep");
-                    repCond.add(rep);
-                    condExp.add(new BasicDBObject("$eq", repCond));
-
-                    dobCond.add("$$val.dim.dob_yr");
-                    dobCond.add(dobYr);
-                    condExp.add(new BasicDBObject("$eq", dobCond));
-
-                    acctTypeCond.add("$$val.dim.acct_type");
-                    acctTypeCond.add(acctType);
-                    condExp.add(new BasicDBObject("$eq", acctTypeCond));
-
-                    stateCond.add("$$val.dim.state");
-                    stateCond.add(state);
-                    condExp.add(new BasicDBObject("$eq", stateCond));
-
-                    filterExp.put("cond", new BasicDBObject("$and", condExp));
-                    return new BasicDBObject("$filter", filterExp);
-                }
-            }).as("val").andInclude("date").andExclude("_id");
-
-            /*
-             * TODO: clean this up as empty arrays could be returned as well (though in real world might not be the case)
-             */
-            SkipOperation s = Aggregation.skip((long)offset*limit);
-            LimitOperation l = Aggregation.limit(limit);
-            Aggregation agg = Aggregation.newAggregation(userDateMatch, filterDimensions, s, l);
-
-            /*
-             * TODO: only monthly here
-             */
-            AggregationResults<Map> results = op.aggregate(agg, period, Map.class);
-            return results.getMappedResults();
+            List<Map> results = op.find(q, Map.class, period);
+            return results;
         }catch(Exception e){
             System.out.println("Excpetion: " + e.getLocalizedMessage());
             return new LinkedList<Map>();

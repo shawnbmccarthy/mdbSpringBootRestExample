@@ -1,9 +1,9 @@
-package org.mdb.rest.testers;
+package org.mdb.rest.testers.flat;
+
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-
-import org.json.JSONObject;
 
 public final class Worker implements Runnable {
 
