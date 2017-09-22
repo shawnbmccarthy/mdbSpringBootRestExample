@@ -1,21 +1,22 @@
-package org.mdb.rest.teters;
+package org.mdb.rest.testers;
 
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
+import java.net.HttpURLConnection;
 
 public final class Worker implements Runnable {
 
-    private final URLConnection connection;
+    private final HttpURLConnection connection;
 
-    public Worker(URLConnection c){
+    public Worker(HttpURLConnection c){
         connection = c;
     }
 
 
     @Override public void run(){
         try {
+            System.out.println("rc; " + connection.getResponseMessage());
             Object o = connection.getContent();
+
         } catch(IOException ioe){
             System.err.println(ioe.getLocalizedMessage());
         }
