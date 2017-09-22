@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.mongodb.AggregationOptions;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +92,7 @@ public class MdbRestController {
             }).as("val").andInclude("date").andExclude("_id");
 
             UnwindOperation unwindVal = Aggregation.unwind("$val");
+
 
             /*
              * TODO: Understand what projections are needed for the team
