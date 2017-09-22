@@ -7,7 +7,7 @@ import org.json.JSONObject;
 
 public final class Worker implements Runnable {
 
-    private final HttpURLConnection connection;
+    private HttpURLConnection connection;
 
     public Worker(HttpURLConnection c){
         connection = c;
@@ -17,10 +17,11 @@ public final class Worker implements Runnable {
     @Override public void run(){
         try {
             long start = System.currentTimeMillis();
-            JSONObject o = (JSONObject) connection.getContent();
+            connection.getContent();
             long end = System.currentTimeMillis();
             System.out.println("rc: " + connection.getResponseCode() + ", type: " + connection.getContentType() + " l: "
                     + connection.getContentLength() + ", t: " + (end - start));
+            connection = null;
         } catch(IOException ioe){
             System.err.println(ioe.getLocalizedMessage());
         }

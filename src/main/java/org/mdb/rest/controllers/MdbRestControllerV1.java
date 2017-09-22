@@ -32,7 +32,6 @@ import java.util.*;
  *     4. dimensions: CSV format (still need to work this out)
  *     5. offset: offset of request default 0 (NOT USED IN THIS VERSION)
  *     6. limit: max number of documents per response, default 1000 (NOT USED IN THIS VERSION)
- *     
  */
 @RestController
 public class MdbRestControllerV1 {
