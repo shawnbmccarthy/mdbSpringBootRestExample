@@ -26,6 +26,7 @@ import io.swagger.annotations.ApiParam;
 
 /*
  * Basic RestController /nnas
+ * Currently only goes against the month
  */
 @RestController
 public class MdbRestController {
@@ -50,71 +51,90 @@ public class MdbRestController {
             @ApiParam(value = "START POSITION", defaultValue = "0") @RequestParam(value = "offset", required = false, defaultValue = "0") int offset,
             @ApiParam(value = "PAGE SIZE", defaultValue = "1000") @RequestParam(value = "limit", required = false, defaultValue = "1000") int limit
     ) {
-        try {
-            AggregationOperation userDateMatch = Aggregation.match(
-                    Criteria.where("userId").is(userId).andOperator(
-                            Criteria.where("date").gte(new Date(fromDateTime.toInstant().toEpochMilli())),
-                            Criteria.where("date").lte(new Date(toDateTime.toInstant().toEpochMilli()))
-                    )
-            );
+        boolean success = true;
+        int count = 0;
+        AggregationResults<Map> results = null;
+        do {
+            try {
+                AggregationOperation userDateMatch = Aggregation.match(
+                        Criteria.where("userId").is(userId).andOperator(
+                                Criteria.where("date").gte(new Date(fromDateTime.toInstant().toEpochMilli())),
+                                Criteria.where("date").lte(new Date(toDateTime.toInstant().toEpochMilli()))
+                        )
+                );
 
-            LimitOperation l = Aggregation.limit(10);
+                LimitOperation l = Aggregation.limit(10);
 
-            /*
-             * TODO: Need to figure out if it is monthly or something else
-             * Description given originally was application defines it
-             */
+                /*
+                 * TODO: Need to figure out if it is monthly or something else
+                 * Description given originally was application defines it
+                 */
 
-            ProjectionOperation filterDimensions = Aggregation.project().and(new AggregationExpression() {
-                @Override
-                public DBObject toDbObject(AggregationOperationContext aggregationOperationContext) {
-                    // https://docs.mongodb.com/manual/reference/operator/aggregation/filter/index.html
-                    DBObject filterExp = new BasicDBObject("input", "$val").append("as", "val");
-                    List<DBObject> condExp = new ArrayList<>();
+                ProjectionOperation filterDimensions = Aggregation.project().and(new AggregationExpression() {
+                    @Override
+                    public DBObject toDbObject(AggregationOperationContext aggregationOperationContext) {
+                        // https://docs.mongodb.com/manual/reference/operator/aggregation/filter/index.html
+                        DBObject filterExp = new BasicDBObject("input", "$val").append("as", "val");
+                        List<DBObject> condExp = new ArrayList<>();
 
-                    /*
-                     * TODO: Get clarity on this rule
-                     * for right now the assumption will be (until confirmed):
-                     * dimmensions map right to the name of the dimensions stored in the document
-                     * - rule: if the dimension is listed push on the condExp with an asterisk
-                     */
-                    String[] dims = dimensions.toLowerCase().split("\\|");
-                    for(String dim : dims){
-                        List<String> cond = new ArrayList<>();
-                        cond.add("$$val.dim." + dim);
-                        cond.add("*");
-                        condExp.add(new BasicDBObject().append("$eq", cond));
+                        /*
+                         * TODO: Get clarity on this rule
+                         * for right now the assumption will be (until confirmed):
+                         * dimmensions map right to the name of the dimensions stored in the document
+                         * - rule: if the dimension is listed push on the condExp with an asterisk
+                         */
+                        String[] dims = dimensions.toLowerCase().split("\\|");
+                        for (String dim : dims) {
+                            List<String> cond = new ArrayList<>();
+                            cond.add("$$val.dim." + dim);
+                            cond.add("*");
+                            condExp.add(new BasicDBObject().append("$eq", cond));
+                        }
+
+                        filterExp.put("cond", new BasicDBObject("$and", condExp));
+                        return new BasicDBObject("$filter", filterExp);
                     }
+                }).as("val").andInclude("date").andExclude("_id");
 
-                    filterExp.put("cond", new BasicDBObject("$and", condExp));
-                    return new BasicDBObject("$filter", filterExp);
-                }
-            }).as("val").andInclude("date").andExclude("_id");
-
-            UnwindOperation unwindVal = Aggregation.unwind("$val");
+                UnwindOperation unwindVal = Aggregation.unwind("$val");
 
 
-            /*
-             * TODO: Understand what projections are needed for the team
-             */
-            ProjectionOperation projectDims = Aggregation.project()
-                    .andInclude("date")
-                    .and("$val.value").as("nna")
-                    .and("$val.dim.rep").as("dimension.rep")
-                    .and("$val.dim.dob_yr").as("dimension.dob_yr")
-                    .and("$val.dim.acct_type").as("dimension.acct_type")
-                    .and("$val.dim.state").as("dimension.state");
+                /*
+                 * TODO: Understand what projections are needed for the team
+                 */
+                ProjectionOperation projectDims = Aggregation.project()
+                        .andInclude("date")
+                        .and("$val.value").as("nna")
+                        .and("$val.dim.rep").as("dimension.rep")
+                        .and("$val.dim.dob_yr").as("dimension.dob_yr")
+                        .and("$val.dim.acct_type").as("dimension.acct_type")
+                        .and("$val.dim.state").as("dimension.state");
 
-            Aggregation agg = Aggregation.newAggregation(userDateMatch, l, filterDimensions, unwindVal, projectDims);
+                Aggregation agg = Aggregation.newAggregation(userDateMatch, l, filterDimensions, unwindVal, projectDims);
 
-            /*
-             * TODO: only monthly here
-             */
-            AggregationResults<Map> results = op.aggregate(agg, mdbCollection, Map.class);
-            return results.getMappedResults();
-        }catch(Exception e){
-            System.out.println("Excpetion: " + e.getLocalizedMessage());
-            return new LinkedList<Map>();
+                /*
+                 * TODO: only monthly here
+                 */
+                results = op.aggregate(agg, mdbCollection, Map.class);
+                return results.getMappedResults();
+            } catch (Exception e) {
+                System.err.println("[E:" + count + "]Problem reading: " + e.getLocalizedMessage());
+                success = false;
+                pause(250L * count);
+                count = count + 1;
+
+            }
+        }while(!success && count < 5);
+        /* if here failed - return empty result */
+        System.err.println("[E]MDB Rest Controller Failed to read from primary - cluster still down?");
+        return new LinkedList<Map>();
+    }
+
+    private void pause(long time){
+        try {
+            Thread.sleep(time);
+        }catch(InterruptedException ie){
+            /* do nothing */
         }
     }
 

@@ -26,10 +26,13 @@ public final class Worker implements Runnable {
             long start = System.currentTimeMillis();
             HttpResponse res = clnt.execute(uri);
             long end = System.currentTimeMillis();
-            System.out.println("rc: " + res.getStatusLine().getStatusCode() + ", type: " + res.getEntity().getContentType() + " l: "
+            System.out.println("[S]rc: " + res.getStatusLine().getStatusCode() + ", type: " + res.getEntity().getContentType() + " l: "
                     + res.getEntity().getContentLength() + ", t: " + (end - start));
+            Thread.sleep(250);
         } catch(IOException ioe){
-            System.err.println(ioe.getLocalizedMessage());
+            System.err.println("[E]Thread Exception(ioe): " + ioe.getLocalizedMessage());
+        } catch(InterruptedException ie){
+            System.err.println("[E]Thread Exception(ie): " + ie.getLocalizedMessage());
         }
     }
 }
