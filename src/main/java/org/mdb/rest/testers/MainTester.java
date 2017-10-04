@@ -1,7 +1,5 @@
 package org.mdb.rest.testers;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
